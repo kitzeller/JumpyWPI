@@ -6,6 +6,7 @@ window.onload = function () {
     console.log(d3); // Test if d3 is loaded
 
     var START_GAME = false;
+    var RADIUS = 13;
 
     /**
      * WPI Game
@@ -17,7 +18,7 @@ window.onload = function () {
                 circle
                     .transition()
                     .duration(250)
-                    .attr("cy", circle.attr("cy") - 35);
+                    .attr("cy", circle.attr("cy") - 40);
             } else {
                 START_GAME = true;
                 startGame();
@@ -54,10 +55,10 @@ window.onload = function () {
 
     var circle = svg
         .append("circle")
-        .attr("r", 13)
+        .attr("r", RADIUS)
         .attr("cx", 100)
         .attr("cy", 100)
-        .style("fill", "black");
+        .style("fill", "red");
 
     var timer;
     var rectTimer;
@@ -67,7 +68,7 @@ window.onload = function () {
 
         circle.attr("cx", 100)
             .attr("cy", 100)
-            .style("fill","black");
+            .style("fill","red");
 
         timer = d3.timer(function (time) {
             circle.attr("cy", function (d) {
@@ -154,9 +155,9 @@ window.onload = function () {
 
 
     function checkHit(x1, y1, x2, y2, x, y) {
-        if (x > x1 && x < x2 && y > y1 && y < y2) {
+        if (x + RADIUS > x1 && x - RADIUS < x2 && y + RADIUS > y1 && y - RADIUS < y2) {
             console.log("made it");
-            circle.style("fill", "red");
+            circle.style("fill", "grey");
             endGame();
         }
     }
