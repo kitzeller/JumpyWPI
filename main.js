@@ -34,7 +34,7 @@ window.onload = function () {
     document.body.onkeyup = function (e) {
         if (e.keyCode == 32) {
             // Space
-            if (START_GAME){
+            if (START_GAME) {
                 circle
                     .transition()
                     .duration(250)
@@ -42,10 +42,12 @@ window.onload = function () {
             }
         }
 
-        if (e.keyCode == 13){
+        if (e.keyCode == 13) {
             // Enter
-            START_GAME = true;
-            startGame();
+            if (!START_GAME) {
+                START_GAME = true;
+                startGame();
+            }
         }
     };
 
@@ -93,7 +95,7 @@ window.onload = function () {
 
         circle.attr("cx", 100)
             .attr("cy", 100)
-            .style("fill","red");
+            .style("fill", "red");
 
         // Circle Timer
         timer = d3.timer(function (time) {
@@ -103,7 +105,7 @@ window.onload = function () {
                 return cy;
             });
 
-            if (parseFloat(circle.attr("cy")) + parseFloat(circle.attr("r"))> height){
+            if (parseFloat(circle.attr("cy")) + parseFloat(circle.attr("r")) > height) {
                 endGame();
             }
         });
@@ -113,7 +115,7 @@ window.onload = function () {
 
     }
 
-    function obstacleTimer(){
+    function obstacleTimer() {
         // Obstacle Timer
         rectTimer = d3.interval(function () {
             var rectoU = svg.append('rect')
@@ -125,8 +127,8 @@ window.onload = function () {
             rectoU.attr("x", width + 100)
                 .transition()
                 .attr("x", -300)
-                .attr("height", function(){
-                    if (OBSTACLES_PASSED > 15){
+                .attr("height", function () {
+                    if (OBSTACLES_PASSED > 15) {
                         // After 15 obstacle start changing heights
                         return d3.randomUniform(1, 150)()
                     } else {
@@ -151,7 +153,7 @@ window.onload = function () {
                     }
                 })
                 .duration(5000)
-                .on("end", function(){
+                .on("end", function () {
                     OBSTACLES_PASSED++;
                 });
 
@@ -167,8 +169,8 @@ window.onload = function () {
             rectoB.attr("x", width + 100)
                 .transition()
                 .attr("x", -300)
-                .attr("y", function(){
-                    if (OBSTACLES_PASSED > 15){
+                .attr("y", function () {
+                    if (OBSTACLES_PASSED > 15) {
                         // After 15 obstacle start changing heights
                         return d3.randomUniform(250, height - 100)()
                     } else {
@@ -194,7 +196,7 @@ window.onload = function () {
                 })
                 .duration(5000);
 
-            if (OBSTACLES_PASSED === 30){
+            if (OBSTACLES_PASSED === 30) {
                 TIMER_DELAY = 300;
                 rectTimer.stop();
                 obstacleTimer();
