@@ -1,3 +1,18 @@
+/**
+ * WPI Game
+ * Kit Zellerbach
+ *
+ * - ENTER to start
+ * - SPACE to jump
+ *
+ * Levels:
+ * 0 - Normal
+ * 15 - Changing obstacle height
+ * 30 - More obstacles
+ * 4 - ???
+ *
+ */
+
 window.onload = function () {
 
     var width = 640;
@@ -7,6 +22,10 @@ window.onload = function () {
     var RADIUS = 13;
     var JUMP_HEIGHT = 45;
     var OBSTACLES_PASSED = 0;
+    var TIMER_DELAY = 800;
+
+    var timer;
+    var rectTimer;
 
     /**
      * WPI Game
@@ -14,16 +33,19 @@ window.onload = function () {
 
     document.body.onkeyup = function (e) {
         if (e.keyCode == 32) {
+            // Space
             if (START_GAME){
                 circle
                     .transition()
                     .duration(250)
                     .attr("cy", circle.attr("cy") - JUMP_HEIGHT);
-            } else {
-                START_GAME = true;
-                startGame();
             }
+        }
 
+        if (e.keyCode == 13){
+            // Enter
+            START_GAME = true;
+            startGame();
         }
     };
 
@@ -51,7 +73,12 @@ window.onload = function () {
         .attr("x", (width / 2) - 70)
         .attr("y", (height / 2) - 150)
         .style("fill", "black")
-        .text("Press SPACE to start");
+        .text("Press ENTER to start");
+    svg.append("text")
+        .attr("x", (width / 2) - 70)
+        .attr("y", (height / 2) - 120)
+        .style("fill", "black")
+        .text("Press SPACE to jump");
 
     var circle = svg
         .append("circle")
@@ -59,9 +86,6 @@ window.onload = function () {
         .attr("cx", 100)
         .attr("cy", 100)
         .style("fill", "red");
-
-    var timer;
-    var rectTimer;
 
     function startGame() {
         d3.selectAll("text").remove();
@@ -71,6 +95,7 @@ window.onload = function () {
             .attr("cy", 100)
             .style("fill","red");
 
+        // Circle Timer
         timer = d3.timer(function (time) {
             circle.attr("cy", function (d) {
                 var cy = circle.attr("cy");
@@ -83,6 +108,13 @@ window.onload = function () {
             }
         });
 
+        obstacleTimer();
+
+
+    }
+
+    function obstacleTimer(){
+        // Obstacle Timer
         rectTimer = d3.interval(function () {
             var rectoU = svg.append('rect')
                 .attr("width", 80)
@@ -93,6 +125,14 @@ window.onload = function () {
             rectoU.attr("x", width + 100)
                 .transition()
                 .attr("x", -300)
+                .attr("height", function(){
+                    if (OBSTACLES_PASSED > 15){
+                        // After 15 obstacle start changing heights
+                        return d3.randomUniform(1, 150)()
+                    } else {
+                        return d3.select(this).attr("height");
+                    }
+                })
                 .tween("attr.fill", function () {
                     var node = d3.select(this);
                     return function (t) {
@@ -127,6 +167,14 @@ window.onload = function () {
             rectoB.attr("x", width + 100)
                 .transition()
                 .attr("x", -300)
+                .attr("y", function(){
+                    if (OBSTACLES_PASSED > 15){
+                        // After 15 obstacle start changing heights
+                        return d3.randomUniform(250, height - 100)()
+                    } else {
+                        return d3.select(this).attr("y");
+                    }
+                })
                 .tween("attr.fill", function () {
                     var node = d3.select(this);
                     return function (t) {
@@ -146,7 +194,13 @@ window.onload = function () {
                 })
                 .duration(5000);
 
-        }, 800);
+            if (OBSTACLES_PASSED === 30){
+                TIMER_DELAY = 300;
+                rectTimer.stop();
+                obstacleTimer();
+            }
+
+        }, TIMER_DELAY);
     }
 
     function checkHit(x1, y1, x2, y2, x, y) {
