@@ -3,10 +3,10 @@ window.onload = function () {
     var width = 640;
     var height = 480;
 
-    console.log(d3); // Test if d3 is loaded
-
     var START_GAME = false;
     var RADIUS = 13;
+    var JUMP_HEIGHT = 45;
+    var OBSTACLES_PASSED = 0;
 
     /**
      * WPI Game
@@ -18,7 +18,7 @@ window.onload = function () {
                 circle
                     .transition()
                     .duration(250)
-                    .attr("cy", circle.attr("cy") - 40);
+                    .attr("cy", circle.attr("cy") - JUMP_HEIGHT);
             } else {
                 START_GAME = true;
                 startGame();
@@ -30,10 +30,10 @@ window.onload = function () {
     var svg = d3.select("#svgcontainer")
         .append("svg").attr("width", width).attr("height", height);
 
-
+    // Background Image
     svg.append("defs")
         .append("pattern")
-        .attr("id", "venus")
+        .attr("id", "bg")
         .attr('patternUnits', 'userSpaceOnUse')
         .attr("width", 640)
         .attr("height", 480)
@@ -45,7 +45,7 @@ window.onload = function () {
     svg.append("rect")
         .attr("width", "100%")
         .attr("height", "100%")
-        .attr("fill", "url(#venus)");
+        .attr("fill", "url(#bg)");
 
     svg.append("text")
         .attr("x", (width / 2) - 70)
@@ -65,6 +65,7 @@ window.onload = function () {
 
     function startGame() {
         d3.selectAll("text").remove();
+        OBSTACLES_PASSED = 0;
 
         circle.attr("cx", 100)
             .attr("cy", 100)
@@ -73,7 +74,7 @@ window.onload = function () {
         timer = d3.timer(function (time) {
             circle.attr("cy", function (d) {
                 var cy = circle.attr("cy");
-                cy = parseFloat(cy) + 3;
+                cy = parseFloat(cy) + 4;
                 return cy;
             });
 
@@ -81,7 +82,6 @@ window.onload = function () {
                 endGame();
             }
         });
-
 
         rectTimer = d3.interval(function () {
             var rectoU = svg.append('rect')
@@ -100,20 +100,20 @@ window.onload = function () {
                             let x1 = node.attr("x");
                             let y1 = node.attr("y");
 
-                            //console.log(node.attr("width"),node.attr("height"));
                             let x2 = parseFloat(x1) + parseFloat(node.attr("width"));
                             let y2 = parseFloat(y1) + parseFloat(node.attr("height"));
 
                             let x = parseFloat(circle.attr("cx"));
                             let y = parseFloat(circle.attr("cy"));
 
-                            //console.log("r", x1, y1, x2, y2,"c", x, y);
-
                             checkHit(x1, y1, x2, y2, x, y);
                         }
                     }
                 })
-                .duration(5000);
+                .duration(5000)
+                .on("end", function(){
+                    OBSTACLES_PASSED++;
+                });
 
 
             var rectoB = svg.append('rect')
@@ -134,14 +134,11 @@ window.onload = function () {
                             let x1 = node.attr("x");
                             let y1 = node.attr("y");
 
-                            //console.log(node.attr("width"),node.attr("height"));
                             let x2 = parseFloat(x1) + parseFloat(node.attr("width"));
                             let y2 = parseFloat(y1) + parseFloat(node.attr("height"));
 
                             let x = parseFloat(circle.attr("cx"));
                             let y = parseFloat(circle.attr("cy"));
-
-                            //console.log("r", x1, y1, x2, y2,"c", x, y);
 
                             checkHit(x1, y1, x2, y2, x, y);
                         }
@@ -150,9 +147,7 @@ window.onload = function () {
                 .duration(5000);
 
         }, 800);
-
     }
-
 
     function checkHit(x1, y1, x2, y2, x, y) {
         if (x + RADIUS > x1 && x - RADIUS < x2 && y + RADIUS > y1 && y - RADIUS < y2) {
@@ -166,22 +161,26 @@ window.onload = function () {
         timer.stop();
         rectTimer.stop();
 
-        svg.append("text")
-            .attr("x", (width / 2) - 20)
-            .attr("y", (height / 2) - 100)
-            .style("fill", "red")
-            .text("You lose!");
+        if (START_GAME) {
+            svg.append("text")
+                .attr("x", (width / 2) - 20)
+                .attr("y", (height / 2) - 150)
+                .style("fill", "red")
+                .text("You lose!");
 
+            svg.append("text")
+                .attr("x", (width / 2) - 60)
+                .attr("y", (height / 2) - 120)
+                .style("fill", "red")
+                .text("(" + OBSTACLES_PASSED + " obstacles passed)");
+
+            circle.transition()
+                .attr("cy", 500)
+                .duration(1000);
+
+        }
         START_GAME = false;
-
-        circle.transition()
-            .attr("cy", 500)
-            .duration(1000);
-
-        btnGame.disabled = false;
-
     }
-
 
     /**
      * Helper Functions
