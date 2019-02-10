@@ -46,6 +46,7 @@ window.onload = function () {
     var JUMP_HEIGHT = 50;
     var OBSTACLES_PASSED = 0;
     var TIMER_DELAY = 800;
+    var MUTE_SOUND = false;
 
     var timer;
     var rectTimer;
@@ -67,8 +68,10 @@ window.onload = function () {
                         }
                     });
                 // Allow for sound overlap
-                const newAudio = jumpSound.cloneNode();
-                newAudio.play();
+                if (!MUTE_SOUND){
+                    const newAudio = jumpSound.cloneNode();
+                    newAudio.play();
+                }
             }
             return !(e.keyCode == 32);
         }
@@ -78,6 +81,16 @@ window.onload = function () {
             if (!START_GAME) {
                 START_GAME = true;
                 startGame();
+            }
+        }
+
+        if (e.keyCode == 77){
+            // Mute sound
+            MUTE_SOUND = !MUTE_SOUND;
+            if (!MUTE_SOUND){
+                bgSound.play();
+            } else {
+                bgSound.pause();
             }
         }
     };
@@ -121,7 +134,9 @@ window.onload = function () {
         .style("fill", "red");
 
     function startGame() {
-        bgSound.play();
+        if (!MUTE_SOUND){
+            bgSound.play();
+        }
         d3.selectAll("text").remove();
         OBSTACLES_PASSED = 0;
         TIMER_DELAY = 800;
@@ -268,7 +283,7 @@ window.onload = function () {
         rectTimer.stop();
 
         if (START_GAME) {
-            loseSound.play();
+            if (!MUTE_SOUND) loseSound.play();
 
             d3.selectAll(".obstacle").remove();
 
@@ -330,7 +345,7 @@ window.onload = function () {
     }
 
     function submitScore(name, score) {
-        if (name !== null) {
+        if (name !== null && name !== "") {
             var d = new Date();
             var dateString = d.getMonth() + 1 + "-" + d.getDate() + "-" + d.getFullYear();
             return firebase.database().ref().child(dateString + "--" + name).set(score);
