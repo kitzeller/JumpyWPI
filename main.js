@@ -51,15 +51,16 @@ window.onload = function () {
     var rectTimer;
 
     document.getElementById("placeholder").style.display = "none";
-    document.body.onkeyup = function (e) {
+
+    document.body.onkeydown = function (e) {
         if (e.keyCode == 32) {
             // Space
             if (START_GAME) {
                 circle
                     .transition()
                     .duration(250)
-                    .attr("cy", function(){
-                        if (circle.attr("cy") - JUMP_HEIGHT - circle.attr("r") < 0){
+                    .attr("cy", function () {
+                        if (circle.attr("cy") - JUMP_HEIGHT - circle.attr("r") < 0) {
                             return circle.attr("r");
                         } else {
                             return circle.attr("cy") - JUMP_HEIGHT;
@@ -69,6 +70,7 @@ window.onload = function () {
                 const newAudio = jumpSound.cloneNode();
                 newAudio.play();
             }
+            return !(e.keyCode == 32);
         }
 
         if (e.keyCode == 13) {
@@ -182,14 +184,14 @@ window.onload = function () {
                             checkHit(x1, y1, x2, y2, x, y);
                         }
 
-                        if (node.attr("x") < 70 && node.attr("x") > 65){
-                            if (START_GAME){
+                        if (node.attr("x") < 70 && node.attr("x") > 65) {
+                            if (START_GAME) {
                                 OBSTACLES_PASSED++;
                                 svg.selectAll("text").remove();
                                 svg.append("text")
                                     .attr("x", width - 30)
                                     .attr("y", 20)
-                                    .attr("id","counter")
+                                    .attr("id", "counter")
                                     .style("fill", "black")
                                     .text(OBSTACLES_PASSED);
                             }
