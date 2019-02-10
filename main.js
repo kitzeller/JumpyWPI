@@ -9,28 +9,48 @@
  * 0 - Normal
  * 15 - Changing obstacle height
  * 30 - More obstacles
- * 4 - ???
+ *
+ * Firebase Leaderboard
+ * Sound Effects
+ *
+ * TODO: More levels, different backgrounds
+ * TODO: Text inside obstacles
  *
  */
 
 window.onload = function () {
+
+    // Initialize Firebase
+    var config = {
+        apiKey: "AIzaSyDZJmjUZW0F58e0I7ZeKpaFRTb8DW57b4Y",
+        authDomain: "jumpywpi.firebaseapp.com",
+        databaseURL: "https://jumpywpi.firebaseio.com",
+        projectId: "jumpywpi",
+        storageBucket: "jumpywpi.appspot.com",
+        messagingSenderId: "122348286885"
+    };
+    firebase.initializeApp(config);
+
+    loadScores();
+
+    var jumpSound = new Audio('sound/jump-1.wav');
+    var loseSound = new Audio('sound/lose.wav');
+    var bgSound = new Audio('sound/bg-1.wav');
+    bgSound.loop = true;
 
     var width = 640;
     var height = 480;
 
     var START_GAME = false;
     var RADIUS = 13;
-    var JUMP_HEIGHT = 45;
+    var JUMP_HEIGHT = 50;
     var OBSTACLES_PASSED = 0;
     var TIMER_DELAY = 800;
 
     var timer;
     var rectTimer;
 
-    /**
-     * WPI Game
-     */
-
+    document.getElementById("placeholder").style.display = "none";
     document.body.onkeyup = function (e) {
         if (e.keyCode == 32) {
             // Space
@@ -38,7 +58,16 @@ window.onload = function () {
                 circle
                     .transition()
                     .duration(250)
-                    .attr("cy", circle.attr("cy") - JUMP_HEIGHT);
+                    .attr("cy", function(){
+                        if (circle.attr("cy") - JUMP_HEIGHT - circle.attr("r") < 0){
+                            return circle.attr("r");
+                        } else {
+                            return circle.attr("cy") - JUMP_HEIGHT;
+                        }
+                    });
+                // Allow for sound overlap
+                const newAudio = jumpSound.cloneNode();
+                newAudio.play();
             }
         }
 
@@ -90,8 +119,10 @@ window.onload = function () {
         .style("fill", "red");
 
     function startGame() {
+        bgSound.play();
         d3.selectAll("text").remove();
         OBSTACLES_PASSED = 0;
+        TIMER_DELAY = 800;
 
         circle.attr("cx", 100)
             .attr("cy", 100)
@@ -112,7 +143,6 @@ window.onload = function () {
 
         obstacleTimer();
 
-
     }
 
     function obstacleTimer() {
@@ -122,7 +152,8 @@ window.onload = function () {
                 .attr("width", 80)
                 .attr("height", d3.randomUniform(1, 150)())
                 .attr("y", 0)
-                .attr("fill", getRandomColor());
+                .attr("fill", getRandomColor())
+                .attr("class", "obstacle");
 
             rectoU.attr("x", width + 100)
                 .transition()
@@ -150,11 +181,25 @@ window.onload = function () {
 
                             checkHit(x1, y1, x2, y2, x, y);
                         }
+
+                        if (node.attr("x") < 70 && node.attr("x") > 65){
+                            if (START_GAME){
+                                OBSTACLES_PASSED++;
+                                svg.selectAll("text").remove();
+                                svg.append("text")
+                                    .attr("x", width - 30)
+                                    .attr("y", 20)
+                                    .attr("id","counter")
+                                    .style("fill", "black")
+                                    .text(OBSTACLES_PASSED);
+                            }
+                        }
+
                     }
                 })
                 .duration(5000)
                 .on("end", function () {
-                    OBSTACLES_PASSED++;
+                    d3.select(this).remove();
                 });
 
 
@@ -164,7 +209,9 @@ window.onload = function () {
                 .attr("y", function (d) {
                     return d3.randomUniform(250, height - 100)()
                 })
-                .style("fill", getRandomColor());
+                .style("fill", getRandomColor())
+                .attr("class", "obstacle");
+
 
             rectoB.attr("x", width + 100)
                 .transition()
@@ -202,6 +249,7 @@ window.onload = function () {
                 obstacleTimer();
             }
 
+
         }, TIMER_DELAY);
     }
 
@@ -218,6 +266,10 @@ window.onload = function () {
         rectTimer.stop();
 
         if (START_GAME) {
+            loseSound.play();
+
+            d3.selectAll(".obstacle").remove();
+
             svg.append("text")
                 .attr("x", (width / 2) - 20)
                 .attr("y", (height / 2) - 150)
@@ -232,7 +284,11 @@ window.onload = function () {
 
             circle.transition()
                 .attr("cy", 500)
-                .duration(1000);
+                .duration(1000)
+                .on("end", function () {
+                    var name = prompt("Please enter your name", "");
+                    submitScore(name, OBSTACLES_PASSED);
+                });
 
         }
         START_GAME = false;
@@ -241,6 +297,43 @@ window.onload = function () {
     /**
      * Helper Functions
      */
+
+    function loadScores() {
+        var leaderboard = firebase.database().ref();
+        leaderboard.on('value', function (snapshot) {
+            var board = document.getElementById("leaderboard");
+            board.innerHTML = "";
+
+            var scores = snapshot.val();
+            var sorted = {};
+
+            // Sort by score
+            Object.keys(scores).sort(function (a, b) {
+                return scores[b] - scores[a]
+            })
+                .map(key => sorted[key] = scores[key]);
+
+            // Only top 5
+            const sliced = Object.keys(sorted).slice(0, 5).reduce((result, key) => {
+                result[key] = sorted[key];
+                return result;
+            }, {});
+
+            Object.entries(sliced).forEach(
+                ([key, value]) =>
+                    board.innerHTML += key.split("--")[0] + " " + key.split("--")[1] + "<span style='float:right'>" + value + "</span><br>"
+            );
+
+        });
+    }
+
+    function submitScore(name, score) {
+        if (name !== null) {
+            var d = new Date();
+            var dateString = d.getMonth() + 1 + "-" + d.getDate() + "-" + d.getFullYear();
+            return firebase.database().ref().child(dateString + "--" + name).set(score);
+        }
+    }
 
     function getRandomColor() {
         return "rgb(" + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + ")";
