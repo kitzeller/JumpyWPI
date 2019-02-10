@@ -88,8 +88,12 @@ window.onload = function () {
             // Mute sound
             MUTE_SOUND = !MUTE_SOUND;
             if (!MUTE_SOUND){
+                document.getElementById("vol_off").style.display = "none";
+                document.getElementById("vol_on").style.display = "block";
                 bgSound.play();
             } else {
+                document.getElementById("vol_off").style.display = "block";
+                document.getElementById("vol_on").style.display = "none";
                 bgSound.pause();
             }
         }
