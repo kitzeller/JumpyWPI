@@ -20,6 +20,22 @@
 
 window.onload = function () {
 
+    // Disable dev tools
+    const disableDevtools = callback => {
+        const original = Object.getPrototypeOf;
+
+        Object.getPrototypeOf = (...args) => {
+            if (Error().stack.includes("getCompletions")) callback();
+            return original(...args);
+        };
+    };
+
+    disableDevtools(() => {
+        console.error("devtools has been disabled");
+
+        while (1);
+    });
+
     // Initialize Firebase
     var config = {
         apiKey: "AIzaSyDZJmjUZW0F58e0I7ZeKpaFRTb8DW57b4Y",
@@ -43,7 +59,7 @@ window.onload = function () {
 
     var START_GAME = false;
     var RADIUS = 13;
-    var JUMP_HEIGHT = 50;
+    var JUMP_HEIGHT = 60;
     var OBSTACLES_PASSED = 0;
     var TIMER_DELAY = 800;
     var MUTE_SOUND = false;
@@ -68,7 +84,7 @@ window.onload = function () {
                         }
                     });
                 // Allow for sound overlap
-                if (!MUTE_SOUND){
+                if (!MUTE_SOUND) {
                     const newAudio = jumpSound.cloneNode();
                     newAudio.play();
                 }
@@ -84,10 +100,10 @@ window.onload = function () {
             }
         }
 
-        if (e.keyCode == 77){
+        if (e.keyCode == 77) {
             // Mute sound
             MUTE_SOUND = !MUTE_SOUND;
-            if (!MUTE_SOUND){
+            if (!MUTE_SOUND) {
                 document.getElementById("vol_off").style.display = "none";
                 document.getElementById("vol_on").style.display = "block";
                 bgSound.play();
@@ -138,7 +154,7 @@ window.onload = function () {
         .style("fill", "red");
 
     function startGame() {
-        if (!MUTE_SOUND){
+        if (!MUTE_SOUND) {
             bgSound.play();
         }
         d3.selectAll("text").remove();
@@ -190,7 +206,7 @@ window.onload = function () {
                 .tween("attr.fill", function () {
                     var node = d3.select(this);
                     return function (t) {
-                        if (node.attr("x") < 110 && node.attr("x") > 80) {
+                        if (node.attr("x") < 200 && node.attr("x") > 40) {
                             let x1 = node.attr("x");
                             let y1 = node.attr("y");
 
@@ -206,11 +222,12 @@ window.onload = function () {
                         if (node.attr("x") < 70 && node.attr("x") > 65) {
                             if (START_GAME) {
                                 OBSTACLES_PASSED++;
-                                svg.selectAll("text").remove();
+                                svg.selectAll(".count").remove();
                                 svg.append("text")
                                     .attr("x", width - 30)
                                     .attr("y", 20)
                                     .attr("id", "counter")
+                                    .attr("class","count")
                                     .style("fill", "black")
                                     .text(OBSTACLES_PASSED);
                             }
@@ -223,12 +240,14 @@ window.onload = function () {
                     d3.select(this).remove();
                 });
 
+            // TODO: Make the gap distance random, and then randomise percentage of the obstacle heights (canvas height-gap)
+
 
             var rectoB = svg.append('rect')
                 .attr("width", 80)
                 .attr("height", 300)
                 .attr("y", function (d) {
-                    return d3.randomUniform(250, height - 100)()
+                    return d3.randomUniform(220, height - 80)()
                 })
                 .style("fill", getRandomColor())
                 .attr("class", "obstacle");
@@ -248,7 +267,7 @@ window.onload = function () {
                 .tween("attr.fill", function () {
                     var node = d3.select(this);
                     return function (t) {
-                        if (node.attr("x") < 110 && node.attr("x") > 80) {
+                        if (node.attr("x") < 200 && node.attr("x") > 40) {
                             let x1 = node.attr("x");
                             let y1 = node.attr("y");
 
@@ -264,6 +283,19 @@ window.onload = function () {
                 })
                 .duration(5000);
 
+            // Daily Hurdles
+            // svg.append("text")
+            //     .attr("x", width+110)
+            //     .attr("y", 450)
+            //     .attr("id", "counter")
+            //     .style("font-size", "14px")
+            //     .style("fill", "black")
+            //     .text("anxiety")
+            //     .transition()
+            //     .attr("x", -290)
+            //     .duration(5000);
+
+
             if (OBSTACLES_PASSED === 30) {
                 TIMER_DELAY = 300;
                 rectTimer.stop();
@@ -275,7 +307,7 @@ window.onload = function () {
     }
 
     function checkHit(x1, y1, x2, y2, x, y) {
-        if (x + RADIUS > x1 && x - RADIUS < x2 && y + RADIUS > y1 && y - RADIUS < y2) {
+        if (x + RADIUS >= x1 && x - RADIUS <= x2 && y + RADIUS >= y1 && y - RADIUS <= y2) {
             console.log("made it");
             circle.style("fill", "grey");
             endGame();
