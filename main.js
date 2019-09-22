@@ -219,10 +219,11 @@ window.onload = function () {
                             checkHit(x1, y1, x2, y2, x, y);
                         }
 
-                        if (node.attr("x") < 70 && node.attr("x") > 65) {
-                            if (START_GAME) {
+                        if (node.attr("x") < 70) {
+                            if (START_GAME && !node.attr("counted")) {
                                 OBSTACLES_PASSED++;
                                 svg.selectAll(".count").remove();
+                                node.attr("counted", true);
                                 svg.append("text")
                                     .attr("x", width - 30)
                                     .attr("y", 20)
@@ -308,7 +309,6 @@ window.onload = function () {
 
     function checkHit(x1, y1, x2, y2, x, y) {
         if (x + RADIUS >= x1 && x - RADIUS <= x2 && y + RADIUS >= y1 && y - RADIUS <= y2) {
-            console.log("made it");
             circle.style("fill", "grey");
             endGame();
         }
